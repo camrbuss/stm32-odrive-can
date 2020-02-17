@@ -190,4 +190,19 @@ clean:
 #######################################
 -include $(wildcard $(BUILD_DIR)/*.d)
 
+# USER ADDED START
+
+OPENOCD := openocd -f interface/stlink-v2-1.cfg \
+                $(if $(value PROGRAMMER),-c 'hla_serial $(PROGRAMMER)',) \
+                -f target/stm32f4x.cfg
+
+FIRMWARE = $(BUILD_DIR)/$(TARGET).elf
+
+flash: all
+        $(OPENOCD) -c init \
+                -c 'reset halt' \
+                -c 'flash write_image erase $(FIRMWARE)' \
+                -c 'reset run' \
+                -c exit
+
 # *** EOF ***

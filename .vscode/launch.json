@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceRoot}/build/${workspaceFolderBasename}.elf",
+            "name": "STM32 Debug (OpenOCD)",
+            "device": "STM32F446RE",
+            "svdFile": "${workspaceRoot}/STM32F446.svd",
+            "configFiles": [
+                "/usr/share/openocd/scripts/board/st_nucleo_f4.cfg"
+            ],
+            "interface": "swd",
+            "swoConfig": {
+                    "source": "probe",
+                    "enabled": true,
+                    "swoFrequency": 2000000,
+                    "cpuFrequency": 168000000,
+                    "decoders": [
+                            {
+                                    "port": 0,
+                                    "type": "console",
+                                    "label": "Output"                                                                                               
+                            }
+                    ]
+                    
+            }
+        }
+    ]
+}
