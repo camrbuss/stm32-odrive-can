@@ -33,6 +33,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define AXIS0_NODE_ID (3 << 5)
+#define AXIS1_NODE_ID (1 << 5)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,6 +52,52 @@ DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
+CAN_TxHeaderTypeDef pTxHeaderGetVBus;
+CAN_TxHeaderTypeDef pTxHeaderEncCount;
+CAN_RxHeaderTypeDef pRxHeader;
+uint32_t TxMailbox;
+// uint8_t tData[8] = {0,0,0,0,0,0,0,0}; //declare byte to be transmitted //declare a receive byte
+uint8_t tData[0]; //declare byte to be transmitted //declare a receive byte
+uint8_t rData[8];
+union {
+    float f;
+    unsigned long ul;
+ } u;
+
+HAL_StatusTypeDef status;
+
+CAN_FilterTypeDef pFilter;
+
+volatile uint8_t flag1 = 0;
+
+enum {
+  MSG_CO_NMT_CTRL = 0x000,       // CANOpen NMT Message REC
+  MSG_ODRIVE_HEARTBEAT,
+  MSG_ODRIVE_ESTOP,
+  MSG_GET_MOTOR_ERROR,  // Errors
+  MSG_GET_ENCODER_ERROR,
+  MSG_GET_SENSORLESS_ERROR,
+  MSG_SET_AXIS_NODE_ID,
+  MSG_SET_AXIS_REQUESTED_STATE,
+  MSG_SET_AXIS_STARTUP_CONFIG,
+  MSG_GET_ENCODER_ESTIMATES,
+  MSG_GET_ENCODER_COUNT,
+  MSG_SET_CONTROLLER_MODES,
+  MSG_SET_INPUT_POS,
+  MSG_SET_INPUT_VEL,
+  MSG_SET_INPUT_CURRENT,
+  MSG_SET_VEL_LIMIT,
+  MSG_START_ANTICOGGING,
+  MSG_SET_TRAJ_VEL_LIMIT,
+  MSG_SET_TRAJ_ACCEL_LIMITS,
+  MSG_SET_TRAJ_A_PER_CSS,
+  MSG_GET_IQ,
+  MSG_GET_SENSORLESS_ESTIMATES,
+  MSG_RESET_ODRIVE,
+  MSG_GET_VBUS_VOLTAGE,
+  MSG_CLEAR_ERRORS,
+  MSG_CO_HEARTBEAT_CMD = 0x700,  // CANOpen NMT Heartbeat  SEND
+};
 
 /* USER CODE END PV */
 
@@ -61,6 +109,7 @@ static void MX_CAN1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
+int _write(int file, char *ptr, int len);
 
 /* USER CODE END PFP */
 
@@ -104,12 +153,78 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  pFilter.FilterActivation = ENABLE;
+  pFilter.FilterBank = 0;
+  pFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
+  pFilter.FilterIdHigh = 0x0000;
+  pFilter.FilterIdLow = 0x0000;
+  pFilter.FilterMaskIdHigh = 0x0000;
+  pFilter.FilterMaskIdLow = 0x0000;
+  pFilter.FilterMode = CAN_FILTERMODE_IDMASK;
+  pFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+
+  status = HAL_CAN_ConfigFilter(&hcan1, &pFilter);
+
+  pTxHeaderGetVBus.StdId = AXIS0_NODE_ID + MSG_GET_VBUS_VOLTAGE;
+  pTxHeaderGetVBus.IDE = CAN_ID_STD;
+  pTxHeaderGetVBus.RTR = CAN_RTR_REMOTE;
+  pTxHeaderGetVBus.DLC = sizeof(tData); 
+
+  status = HAL_CAN_Start(&hcan1);
+
+  if (status != HAL_OK) {
+    /* Start Error */
+    Error_Handler();
+  }
+
+  // status = HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+  
+  /* Request transmission */
+  // status = HAL_CAN_AddTxMessage(&hcan1, &pTxHeaderGetVBus, tData, &TxMailbox);
+
+  if (status != HAL_OK)
+  {
+    /* Transmission request Error */
+    Error_Handler();
+  }
+
+  /* Wait transmission complete */
+  while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) != 3) {}
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    if(flag1) {
+      HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+      status = HAL_CAN_AddTxMessage(&hcan1, &pTxHeaderGetVBus, tData, &TxMailbox);
+      while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) != 3) {}
+      HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+      flag1 = 0;
+    }
+
+    if (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0) > 0) {
+        HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &pRxHeader, rData);
+        if (pRxHeader.StdId == 119) {
+          u.ul = (rData[0] << 0) | (rData[1] << 8) | (rData[2] << 16) | (rData[3] << 24);
+          printf("Bus Voltage: %d\n", u.f);
+          
+          // printf("Bus Voltage: %x %x %x %x %x %x %x %x\n", rData[0], rData[1], rData[2], rData[3], rData[4], rData[5], rData[6], rData[7]);
+        } else {
+          printf("pRxHeader.DLC: %lu\n", pRxHeader.StdId);
+        }
+        
+    } else if (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO1) > 0) {
+        HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO1, &pRxHeader, rData);
+    }
+
+
+
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -176,15 +291,15 @@ static void MX_CAN1_Init(void)
 
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 8;
+  hcan1.Init.Prescaler = 2;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_4TQ;
   hcan1.Init.TimeSeg1 = CAN_BS1_16TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_4TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = ENABLE;
-  hcan1.Init.AutoWakeUp = ENABLE;
-  hcan1.Init.AutoRetransmission = ENABLE;
+  hcan1.Init.AutoBusOff = DISABLE;
+  hcan1.Init.AutoWakeUp = DISABLE;
+  hcan1.Init.AutoRetransmission = DISABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
@@ -325,9 +440,20 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
+int _write(int file, char *ptr, int len) {
+  /* Implement your write code here, this is used by puts and printf for example */
+  int i=0;
+  for(i=0 ; i<len ; i++) 
+    ITM_SendChar((*ptr++));
+  return len;
+}
 
 /* USER CODE END 4 */
 
