@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -51,6 +52,7 @@ UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
+osThreadId_t defaultTaskHandle;
 /* USER CODE BEGIN PV */
 CAN_TxHeaderTypeDef pTxHeaderGetVBus;
 CAN_TxHeaderTypeDef pTxHeaderEncCount;
@@ -70,34 +72,7 @@ CAN_FilterTypeDef pFilter;
 
 volatile uint8_t flag1 = 0;
 
-enum {
-  MSG_CO_NMT_CTRL = 0x000,       // CANOpen NMT Message REC
-  MSG_ODRIVE_HEARTBEAT,
-  MSG_ODRIVE_ESTOP,
-  MSG_GET_MOTOR_ERROR,  // Errors
-  MSG_GET_ENCODER_ERROR,
-  MSG_GET_SENSORLESS_ERROR,
-  MSG_SET_AXIS_NODE_ID,
-  MSG_SET_AXIS_REQUESTED_STATE,
-  MSG_SET_AXIS_STARTUP_CONFIG,
-  MSG_GET_ENCODER_ESTIMATES,
-  MSG_GET_ENCODER_COUNT,
-  MSG_SET_CONTROLLER_MODES,
-  MSG_SET_INPUT_POS,
-  MSG_SET_INPUT_VEL,
-  MSG_SET_INPUT_CURRENT,
-  MSG_SET_VEL_LIMIT,
-  MSG_START_ANTICOGGING,
-  MSG_SET_TRAJ_VEL_LIMIT,
-  MSG_SET_TRAJ_ACCEL_LIMITS,
-  MSG_SET_TRAJ_A_PER_CSS,
-  MSG_GET_IQ,
-  MSG_GET_SENSORLESS_ESTIMATES,
-  MSG_RESET_ODRIVE,
-  MSG_GET_VBUS_VOLTAGE,
-  MSG_CLEAR_ERRORS,
-  MSG_CO_HEARTBEAT_CMD = 0x700,  // CANOpen NMT Heartbeat  SEND
-};
+
 
 /* USER CODE END PV */
 
@@ -108,6 +83,8 @@ static void MX_DMA_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART2_UART_Init(void);
+void StartDefaultTask(void *argument);
+
 /* USER CODE BEGIN PFP */
 int _write(int file, char *ptr, int len);
 
@@ -194,6 +171,42 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  const osThreadAttr_t defaultTask_attributes = {
+    .name = "defaultTask",
+    .priority = (osPriority_t) osPriorityNormal,
+    .stack_size = 128
+  };
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+  
+  /* We should never get here as control is now taken by the scheduler */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -210,11 +223,11 @@ int main(void)
         HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &pRxHeader, rData);
         if (pRxHeader.StdId == 119) {
           u.ul = (rData[0] << 0) | (rData[1] << 8) | (rData[2] << 16) | (rData[3] << 24);
-          printf("Bus Voltage: %d\n", u.f);
+          // printf("Bus Voltage: %d\n", u.f);
           
           // printf("Bus Voltage: %x %x %x %x %x %x %x %x\n", rData[0], rData[1], rData[2], rData[3], rData[4], rData[5], rData[6], rData[7]);
         } else {
-          printf("pRxHeader.DLC: %lu\n", pRxHeader.StdId);
+          // printf("pRxHeader.DLC: %lu\n", pRxHeader.StdId);
         }
         
     } else if (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO1) > 0) {
@@ -401,10 +414,10 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
@@ -441,7 +454,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
@@ -456,6 +469,45 @@ int _write(int file, char *ptr, int len) {
 }
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used 
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */ 
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM14 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM14) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
