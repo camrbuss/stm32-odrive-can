@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"c-cpp-flylint.cppcheck.standard": ["c99","c++14"],
+		"files.associations": {
+			"main.h": "c"
+		}
+	}
+}

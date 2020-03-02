@@ -49,6 +49,8 @@
 
 /* USER CODE END Variables */
 osThreadId_t defaultTaskHandle;
+osMessageQueueId_t canCommandsQueueHandle;
+osTimerId_t canSendTimerHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -56,6 +58,7 @@ osThreadId_t defaultTaskHandle;
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
+void canSendTimerCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -78,9 +81,23 @@ osKernelInitialize();
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* definition and creation of canSendTimer */
+  const osTimerAttr_t canSendTimer_attributes = {
+    .name = "canSendTimer"
+  };
+  canSendTimerHandle = osTimerNew(canSendTimerCallback, osTimerPeriodic, NULL, &canSendTimer_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* definition and creation of canCommandsQueue */
+  const osMessageQueueAttr_t canCommandsQueue_attributes = {
+    .name = "canCommandsQueue"
+  };
+  canCommandsQueueHandle = osMessageQueueNew (8, sizeof(uint16_t), &canCommandsQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -114,9 +131,19 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    uint32_t current_time = osKernelGetTickCount();
+    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+    osDelayUntil(current_time + 100);
   }
   /* USER CODE END StartDefaultTask */
+}
+
+/* canSendTimerCallback function */
+void canSendTimerCallback(void *argument)
+{
+  /* USER CODE BEGIN canSendTimerCallback */
+  
+  /* USER CODE END canSendTimerCallback */
 }
 
 /* Private application code --------------------------------------------------*/
