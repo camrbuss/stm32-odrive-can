@@ -25,7 +25,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */     
 #include "u8g2.h"
 /* USER CODE END Includes */
 
@@ -55,9 +55,23 @@
 /* USER CODE BEGIN Variables */
 u8g2_t _u8g2;
 /* USER CODE END Variables */
+/* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for canCommandsQueue */
 osMessageQueueId_t canCommandsQueueHandle;
+const osMessageQueueAttr_t canCommandsQueue_attributes = {
+  .name = "canCommandsQueue"
+};
+/* Definitions for canSendTimer */
 osTimerId_t canSendTimerHandle;
+const osTimerAttr_t canSendTimer_attributes = {
+  .name = "canSendTimer"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -148,12 +162,10 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   * @param  None
   * @retval None
   */
-void MX_FREERTOS_Init(void)
-{
+void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
-  osKernelInitialize();
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -164,9 +176,7 @@ void MX_FREERTOS_Init(void)
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* Create the timer(s) */
-  /* definition and creation of canSendTimer */
-  const osTimerAttr_t canSendTimer_attributes = {
-      .name = "canSendTimer"};
+  /* creation of canSendTimer */
   canSendTimerHandle = osTimerNew(canSendTimerCallback, osTimerPeriodic, NULL, &canSendTimer_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -175,26 +185,21 @@ void MX_FREERTOS_Init(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
-  /* definition and creation of canCommandsQueue */
-  const osMessageQueueAttr_t canCommandsQueue_attributes = {
-      .name = "canCommandsQueue"};
-  canCommandsQueueHandle = osMessageQueueNew(8, sizeof(uint16_t), &canCommandsQueue_attributes);
+  /* creation of canCommandsQueue */
+  canCommandsQueueHandle = osMessageQueueNew (8, sizeof(uint16_t), &canCommandsQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  const osThreadAttr_t defaultTask_attributes = {
-      .name = "defaultTask",
-      .priority = (osPriority_t)osPriorityNormal,
-      .stack_size = 128};
+  /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
+
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
