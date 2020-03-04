@@ -73,7 +73,45 @@ Src/gpio.c \
 Src/can.c \
 Src/dma.c \
 Src/tim.c \
-Src/usart.c 
+Src/usart.c \
+Src/u8g2/u8g2_bitmap.c \
+Src/u8g2/u8g2_box.c \
+Src/u8g2/u8g2_buffer.c \
+Src/u8g2/u8g2_circle.c \
+Src/u8g2/u8g2_cleardisplay.c \
+Src/u8g2/u8g2_d_memory.c \
+Src/u8g2/u8g2_d_setup.c \
+Src/u8g2/u8g2_font.c \
+Src/u8g2/u8g2_fonts.c \
+Src/u8g2/u8g2_hvline.c \
+Src/u8g2/u8g2_input_value.c \
+Src/u8g2/u8g2_intersection.c \
+Src/u8g2/u8g2_kerning.c \
+Src/u8g2/u8g2_line.c \
+Src/u8g2/u8g2_ll_hvline.c \
+Src/u8g2/u8g2_message.c \
+Src/u8g2/u8g2_polygon.c \
+Src/u8g2/u8g2_selection_list.c \
+Src/u8g2/u8g2_setup.c \
+Src/u8g2/u8log.c \
+Src/u8g2/u8log_u8g2.c \
+Src/u8g2/u8log_u8x8.c \
+Src/u8g2/u8x8_8x8.c \
+Src/u8g2/u8x8_byte.c \
+Src/u8g2/u8x8_cad.c \
+Src/u8g2/u8x8_capture.c \
+Src/u8g2/u8x8_debounce.c \
+Src/u8g2/u8x8_display.c \
+Src/u8g2/u8x8_fonts.c \
+Src/u8g2/u8x8_gpio.c \
+Src/u8g2/u8x8_input_value.c \
+Src/u8g2/u8x8_message.c \
+Src/u8g2/u8x8_selection_list.c \
+Src/u8g2/u8x8_setup.c \
+Src/u8g2/u8x8_string.c \
+Src/u8g2/u8x8_u16toa.c \
+Src/u8g2/u8x8_u8toa.c \
+Src/u8g2/u8x8_d_st7920.c
 
 # ASM sources
 ASM_SOURCES =  \
@@ -137,7 +175,8 @@ C_INCLUDES =  \
 -IDrivers/CMSIS/Include \
 -IMiddlewares/Third_Party/FreeRTOS/Source/include \
 -IMiddlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 \
--IMiddlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
+-IMiddlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F \
+-ISrc/u8g2
 
 
 # compile gcc flags
