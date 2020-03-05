@@ -25,8 +25,9 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include "u8g2.h"
+#include "spi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,20 +59,17 @@ u8g2_t _u8g2;
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
-};
+    .name = "defaultTask",
+    .priority = (osPriority_t)osPriorityNormal,
+    .stack_size = 128 * 4};
 /* Definitions for canCommandsQueue */
 osMessageQueueId_t canCommandsQueueHandle;
 const osMessageQueueAttr_t canCommandsQueue_attributes = {
-  .name = "canCommandsQueue"
-};
+    .name = "canCommandsQueue"};
 /* Definitions for canSendTimer */
 osTimerId_t canSendTimerHandle;
 const osTimerAttr_t canSendTimer_attributes = {
-  .name = "canSendTimer"
-};
+    .name = "canSendTimer"};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -82,46 +80,36 @@ uint8_t u8g2_gpio_and_delay_stm32(U8X8_UNUSED u8x8_t *u8x8, U8X8_UNUSED uint8_t 
   //Initialize SPI peripheral
   case U8X8_MSG_GPIO_AND_DELAY_INIT:
     /* HAL initialization contains all what we need so we can skip this part. */
-
     break;
 
   //Function which implements a delay, arg_int contains the amount of ms
   case U8X8_MSG_DELAY_MILLI:
     HAL_Delay(arg_int);
-
     break;
+
   //Function which delays 10us
   case U8X8_MSG_DELAY_10MICRO:
-    for (uint16_t n = 0; n <= 1680; n++)
+    for (uint16_t n = 0; n <= 840; n++)
+    {
+      __NOP();
+    }
+    break;
+
+  // One NOP is 6ns, and multiply by two fro jump back
+  case U8X8_MSG_DELAY_NANO:
+    for (uint16_t n = 0; n <= (arg_int/12); n++)
     {
       __NOP();
     }
 
-    break;
   //Function which delays 100ns
   case U8X8_MSG_DELAY_100NANO:
-    for (uint16_t n = 0; n <=17; n++)
+    for (uint16_t n = 0; n <= 8; n++)
     {
       __NOP();
     }
-
     break;
-  //Function to define the logic level of the clockline
-  case U8X8_MSG_GPIO_SPI_CLOCK:
-    if (arg_int)
-      HAL_GPIO_WritePin(SCK_GPIO_Port, SCK_Pin, RESET);
-    else
-      HAL_GPIO_WritePin(SCK_GPIO_Port, SCK_Pin, SET);
 
-    break;
-  //Function to define the logic level of the data line to the display
-  case U8X8_MSG_GPIO_SPI_DATA:
-    if (arg_int)
-      HAL_GPIO_WritePin(MOSI_GPIO_Port, MOSI_Pin, SET);
-    else
-      HAL_GPIO_WritePin(MOSI_GPIO_Port, MOSI_Pin, RESET);
-
-    break;
   // Function to define the logic level of the CS line
   case U8X8_MSG_GPIO_CS:
     if (arg_int)
@@ -130,26 +118,45 @@ uint8_t u8g2_gpio_and_delay_stm32(U8X8_UNUSED u8x8_t *u8x8, U8X8_UNUSED uint8_t 
       HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, RESET);
 
     break;
-  //Function to define the logic level of the Data/ Command line
-  case U8X8_MSG_GPIO_DC:
-    //			if (arg_int) HAL_GPIO_WritePin(CD_LCD_PORT, CD_LCD_PIN, SET);
-    //			else HAL_GPIO_WritePin(CD_LCD_PORT, CD_LCD_PIN, RESET);
 
-    break;
   //Function to define the logic level of the RESET line
   case U8X8_MSG_GPIO_RESET:
     if (arg_int)
       HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, SET);
     else
       HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, RESET);
-
     break;
+
   default:
     return 0; //A message was received which is not implemented, return 0 to indicate an error
   }
 
   return 1; // command processed successfully.
 }
+
+uint8_t u8x8_byte_3wire_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
+{
+  switch (msg)
+  {
+  case U8X8_MSG_BYTE_SEND:
+    HAL_SPI_Transmit(&hspi2, (uint8_t *)arg_ptr, arg_int, HAL_MAX_DELAY);
+    break;
+  case U8X8_MSG_BYTE_INIT:
+    break;
+  case U8X8_MSG_BYTE_START_TRANSFER:
+    u8x8_gpio_SetCS(u8x8, u8x8->display_info->chip_enable_level);  
+    u8x8->gpio_and_delay_cb(u8x8, U8X8_MSG_DELAY_NANO, u8x8->display_info->post_chip_enable_wait_ns, NULL);
+    break;
+  case U8X8_MSG_BYTE_END_TRANSFER:
+    u8x8->gpio_and_delay_cb(u8x8, U8X8_MSG_DELAY_NANO, u8x8->display_info->pre_chip_disable_wait_ns, NULL);
+    u8x8_gpio_SetCS(u8x8, u8x8->display_info->chip_disable_level);
+    break;
+  default:
+    return 0;
+  }
+  return 1;
+}
+
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -162,7 +169,8 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   * @param  None
   * @retval None
   */
-void MX_FREERTOS_Init(void) {
+void MX_FREERTOS_Init(void)
+{
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -186,7 +194,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of canCommandsQueue */
-  canCommandsQueueHandle = osMessageQueueNew (8, sizeof(uint16_t), &canCommandsQueue_attributes);
+  canCommandsQueueHandle = osMessageQueueNew(8, sizeof(uint16_t), &canCommandsQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -199,7 +207,6 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
-
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -212,23 +219,21 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+  // uint32_t current_time = osKernelGetTickCount();
+  u8g2_Setup_st7920_s_128x64_1(&_u8g2, U8G2_R0, u8x8_byte_3wire_hw_spi, u8g2_gpio_and_delay_stm32);
+  u8g2_InitDisplay(&_u8g2);     // send init sequence to the display, display is in sleep mode after this,
+  u8g2_SetPowerSave(&_u8g2, 0); // wake up display
+
+  HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, RESET);
+  HAL_Delay(100);
+  HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, SET);
+  HAL_Delay(200);
+
   /* Infinite loop */
   for (;;)
   {
     // uint32_t current_time = osKernelGetTickCount();
-    u8g2_Setup_st7920_p_128x64_1(&_u8g2, U8G2_R0, u8x8_byte_3wire_sw_spi, u8g2_gpio_and_delay_stm32);
-    u8g2_InitDisplay(&_u8g2);     // send init sequence to the display, display is in sleep mode after this,
-    u8g2_SetPowerSave(&_u8g2, 0); // wake up display
-
-    HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, RESET);
-    HAL_Delay(100);
-    HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, SET);
-    HAL_Delay(200);
-
-
-  for (;;)
-  {
-    // uint32_t current_time = osKernelGetTickCount();
+    u8g2_ClearDisplay(&_u8g2);
     u8g2_DrawLine(&_u8g2, 50, 50, 100, 100);
     u8g2_SendBuffer(&_u8g2);
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
@@ -241,7 +246,6 @@ void StartDefaultTask(void *argument)
 void canSendTimerCallback(void *argument)
 {
   /* USER CODE BEGIN canSendTimerCallback */
-  
 
   /* USER CODE END canSendTimerCallback */
 }
