@@ -97,7 +97,7 @@ uint8_t u8g2_gpio_and_delay_stm32(U8X8_UNUSED u8x8_t *u8x8, U8X8_UNUSED uint8_t 
 
   // One NOP is 6ns, and multiply by two fro jump back
   case U8X8_MSG_DELAY_NANO:
-    for (uint16_t n = 0; n <= (arg_int/12); n++)
+    for (uint16_t n = 0; n <= (arg_int / 12); n++)
     {
       __NOP();
     }
@@ -144,7 +144,7 @@ uint8_t u8x8_byte_3wire_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void 
   case U8X8_MSG_BYTE_INIT:
     break;
   case U8X8_MSG_BYTE_START_TRANSFER:
-    u8x8_gpio_SetCS(u8x8, u8x8->display_info->chip_enable_level);  
+    u8x8_gpio_SetCS(u8x8, u8x8->display_info->chip_enable_level);
     u8x8->gpio_and_delay_cb(u8x8, U8X8_MSG_DELAY_NANO, u8x8->display_info->post_chip_enable_wait_ns, NULL);
     break;
   case U8X8_MSG_BYTE_END_TRANSFER:
@@ -234,8 +234,13 @@ void StartDefaultTask(void *argument)
   {
     // uint32_t current_time = osKernelGetTickCount();
     u8g2_ClearDisplay(&_u8g2);
-    u8g2_DrawLine(&_u8g2, 50, 50, 100, 100);
-    u8g2_SendBuffer(&_u8g2);
+    u8g2_FirstPage(&_u8g2);
+    do
+    {
+      /* all graphics commands have to appear within the loop body. */
+      u8g2_SetFont(&_u8g2, u8g2_font_ncenB14_tr);
+      u8g2_DrawStr(&_u8g2, 0, 20, "Hello World!");
+    } while (u8g2_NextPage(&_u8g2));
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     osDelay(1000);
   }
