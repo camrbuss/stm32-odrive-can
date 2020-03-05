@@ -87,7 +87,7 @@ uint8_t u8g2_gpio_and_delay_stm32(U8X8_UNUSED u8x8_t *u8x8, U8X8_UNUSED uint8_t 
 
   //Function which implements a delay, arg_int contains the amount of ms
   case U8X8_MSG_DELAY_MILLI:
-    osDelay(arg_int);
+    HAL_Delay(arg_int);
 
     break;
   //Function which delays 10us
@@ -125,9 +125,9 @@ uint8_t u8g2_gpio_and_delay_stm32(U8X8_UNUSED u8x8_t *u8x8, U8X8_UNUSED uint8_t 
   // Function to define the logic level of the CS line
   case U8X8_MSG_GPIO_CS:
     if (arg_int)
-      HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, RESET);
-    else
       HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, SET);
+    else
+      HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, RESET);
 
     break;
   //Function to define the logic level of the Data/ Command line
@@ -181,7 +181,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
-  osTimerStart(canSendTimerHandle, 1000);
+  // osTimerStart(canSendTimerHandle, 1000);
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
@@ -225,11 +225,14 @@ void StartDefaultTask(void *argument)
     HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, SET);
     HAL_Delay(200);
 
-    HAL_Delay(1000);
 
+  for (;;)
+  {
+    // uint32_t current_time = osKernelGetTickCount();
     u8g2_DrawLine(&_u8g2, 50, 50, 100, 100);
     u8g2_SendBuffer(&_u8g2);
-    osDelay(10000);
+    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+    osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -238,7 +241,7 @@ void StartDefaultTask(void *argument)
 void canSendTimerCallback(void *argument)
 {
   /* USER CODE BEGIN canSendTimerCallback */
-  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+  
 
   /* USER CODE END canSendTimerCallback */
 }
