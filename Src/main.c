@@ -42,6 +42,7 @@
 /* USER CODE BEGIN PD */
 #define AXIS0_NODE_ID (3 << 5)
 #define AXIS1_NODE_ID (1 << 5)
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -60,17 +61,15 @@ uint32_t TxMailbox;
 uint8_t tData[0]; //declare byte to be transmitted //declare a receive byte
 uint8_t rData[8];
 union {
-    float f;
-    unsigned long ul;
- } u;
+  float f;
+  unsigned long ul;
+} u;
 
 HAL_StatusTypeDef status;
 
 CAN_FilterTypeDef pFilter;
 
 volatile uint8_t flag1 = 0;
-
-
 
 /* USER CODE END PV */
 
@@ -137,17 +136,18 @@ int main(void)
   pTxHeaderGetVBus.StdId = AXIS0_NODE_ID + 0x17; //MSG_GET_VBUS_VOLTAGE;
   pTxHeaderGetVBus.IDE = CAN_ID_STD;
   pTxHeaderGetVBus.RTR = CAN_RTR_REMOTE;
-  pTxHeaderGetVBus.DLC = sizeof(tData); 
+  pTxHeaderGetVBus.DLC = sizeof(tData);
 
   status = HAL_CAN_Start(&hcan1);
 
-  if (status != HAL_OK) {
+  if (status != HAL_OK)
+  {
     /* Start Error */
     Error_Handler();
   }
 
   // status = HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
-  
+
   /* Request transmission */
   // status = HAL_CAN_AddTxMessage(&hcan1, &pTxHeaderGetVBus, tData, &TxMailbox);
 
@@ -158,17 +158,18 @@ int main(void)
   }
 
   /* Wait transmission complete */
-  while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) != 3) {}
-
+  while (HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) != 3)
+  {
+  }
 
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();  /* Call init function for freertos objects (in freertos.c) */
-  MX_FREERTOS_Init(); 
+  osKernelInitialize(); /* Call init function for freertos objects (in freertos.c) */
+  MX_FREERTOS_Init();
   /* Start scheduler */
   osKernelStart();
- 
+
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -187,16 +188,15 @@ int main(void)
     //     if (pRxHeader.StdId == 119) {
     //       u.ul = (rData[0] << 0) | (rData[1] << 8) | (rData[2] << 16) | (rData[3] << 24);
     //       // printf("Bus Voltage: %d\n", u.f);
-          
+
     //       // printf("Bus Voltage: %x %x %x %x %x %x %x %x\n", rData[0], rData[1], rData[2], rData[3], rData[4], rData[5], rData[6], rData[7]);
     //     } else {
     //       // printf("pRxHeader.DLC: %lu\n", pRxHeader.StdId);
     //     }
-        
+
     // } else if (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO1) > 0) {
     //     HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO1, &pRxHeader, rData);
     // }
-
 
     /* USER CODE END WHILE */
 
@@ -235,8 +235,7 @@ void SystemClock_Config(void)
   }
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
@@ -249,17 +248,18 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-int _write(int file, char *ptr, int len) {
+int _write(int file, char *ptr, int len)
+{
   /* Implement your write code here, this is used by puts and printf for example */
-  int i=0;
-  for(i=0 ; i<len ; i++) 
+  int i = 0;
+  for (i = 0; i < len; i++)
     ITM_SendChar((*ptr++));
   return len;
 }
 
 /* USER CODE END 4 */
 
- /**
+/**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM14 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
@@ -272,7 +272,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM14) {
+  if (htim->Instance == TIM14)
+  {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
@@ -292,7 +293,7 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -301,7 +302,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

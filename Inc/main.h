@@ -74,7 +74,14 @@ void Error_Handler(void);
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+#define SCK_GPIO_Port GPIOB
+#define SCK_Pin GPIO_PIN_10
+#define MOSI_GPIO_Port GPIOC
+#define MOSI_Pin GPIO_PIN_1
+#define LCD_CS_GPIO_Port GPIOB
+#define LCD_CS_Pin GPIO_PIN_14
+#define LCD_RESET_GPIO_Port GPIOB
+#define LCD_RESET_Pin GPIO_PIN_13
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

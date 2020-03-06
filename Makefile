@@ -74,6 +74,7 @@ Src/can.c \
 Src/dma.c \
 Src/tim.c \
 Src/usart.c \
+Src/display.c \
 Src/u8g2/u8g2_bitmap.c \
 Src/u8g2/u8g2_box.c \
 Src/u8g2/u8g2_buffer.c \
