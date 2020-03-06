@@ -25,7 +25,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */     
 #include "u8g2.h"
 #include "spi.h"
 /* USER CODE END Includes */
@@ -59,17 +59,20 @@ u8g2_t _u8g2;
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-    .name = "defaultTask",
-    .priority = (osPriority_t)osPriorityNormal,
-    .stack_size = 128 * 4};
+  .name = "defaultTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
 /* Definitions for canCommandsQueue */
 osMessageQueueId_t canCommandsQueueHandle;
 const osMessageQueueAttr_t canCommandsQueue_attributes = {
-    .name = "canCommandsQueue"};
+  .name = "canCommandsQueue"
+};
 /* Definitions for canSendTimer */
 osTimerId_t canSendTimerHandle;
 const osTimerAttr_t canSendTimer_attributes = {
-    .name = "canSendTimer"};
+  .name = "canSendTimer"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -89,22 +92,21 @@ uint8_t u8g2_gpio_and_delay_stm32(U8X8_UNUSED u8x8_t *u8x8, U8X8_UNUSED uint8_t 
 
   //Function which delays 10us
   case U8X8_MSG_DELAY_10MICRO:
-    for (uint16_t n = 0; n <= 840; n++)
+    for (uint16_t n = 0; n <= 280; n++)
     {
       __NOP();
     }
     break;
 
-  // One NOP is 6ns, and multiply by two fro jump back
   case U8X8_MSG_DELAY_NANO:
-    for (uint16_t n = 0; n <= (arg_int / 12); n++)
+    for (uint16_t n = 0; n <= (arg_int / 36); n++)
     {
       __NOP();
     }
 
   //Function which delays 100ns
   case U8X8_MSG_DELAY_100NANO:
-    for (uint16_t n = 0; n <= 8; n++)
+    for (uint16_t n = 0; n <= 3; n++)
     {
       __NOP();
     }
@@ -169,8 +171,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   * @param  None
   * @retval None
   */
-void MX_FREERTOS_Init(void)
-{
+void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -194,7 +195,7 @@ void MX_FREERTOS_Init(void)
 
   /* Create the queue(s) */
   /* creation of canCommandsQueue */
-  canCommandsQueueHandle = osMessageQueueNew(8, sizeof(uint16_t), &canCommandsQueue_attributes);
+  canCommandsQueueHandle = osMessageQueueNew (8, sizeof(uint16_t), &canCommandsQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -207,6 +208,7 @@ void MX_FREERTOS_Init(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
+
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -239,7 +241,7 @@ void StartDefaultTask(void *argument)
     {
       /* all graphics commands have to appear within the loop body. */
       u8g2_SetFont(&_u8g2, u8g2_font_ncenB14_tr);
-      u8g2_DrawStr(&_u8g2, 0, 20, "Hello World!");
+      u8g2_DrawStr(&_u8g2, 0, 20, "Cam + Yudi!");
     } while (u8g2_NextPage(&_u8g2));
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     osDelay(1000);
