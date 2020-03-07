@@ -25,7 +25,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */  
+/* USER CODE BEGIN Includes */     
 #include "display.h"
 /* USER CODE END Includes */
 
@@ -48,10 +48,24 @@
 /* USER CODE BEGIN Variables */
 
 /* USER CODE END Variables */
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
+/* Definitions for controlTask */
+osThreadId_t controlTaskHandle;
+const osThreadAttr_t controlTask_attributes = {
+  .name = "controlTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for displayTask */
+osThreadId_t displayTaskHandle;
+const osThreadAttr_t displayTask_attributes = {
+  .name = "displayTask",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 4
+};
+/* Definitions for canTask */
+osThreadId_t canTaskHandle;
+const osThreadAttr_t canTask_attributes = {
+  .name = "canTask",
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
@@ -72,7 +86,9 @@ const osTimerAttr_t canSendTimer_attributes = {
 
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void *argument);
+void controlTaskStart(void *argument);
+void diplayTaskStart(void *argument);
+void canTaskStart(void *argument);
 void canSendTimerCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -113,8 +129,14 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  /* creation of controlTask */
+  controlTaskHandle = osThreadNew(controlTaskStart, NULL, &controlTask_attributes);
+
+  /* creation of displayTask */
+  displayTaskHandle = osThreadNew(diplayTaskStart, NULL, &displayTask_attributes);
+
+  /* creation of canTask */
+  canTaskHandle = osThreadNew(canTaskStart, NULL, &canTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -122,31 +144,63 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_controlTaskStart */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the controlTask thread.
   * @param  argument: Not used 
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+/* USER CODE END Header_controlTaskStart */
+void controlTaskStart(void *argument)
 {
-  /* USER CODE BEGIN StartDefaultTask */
-  // uint32_t current_time = osKernelGetTickCount();
-
+  /* USER CODE BEGIN controlTaskStart */
+  // Adding display related task to start of the control task as it has higher priority
   display_init();
-  display_add_float_line("Test", 5.23e21, 1);
-  
   /* Infinite loop */
-  for (;;)
+  for(;;)
   {
-    uint32_t current_time = osKernelGetTickCount();
-    display_add_float_line("Ticks", current_time, 8);
+    uint32_t count = osKernelGetTickCount();
+    display_add_float_line("Ticks", count, 1);
+    osDelay(100);
+  }
+  /* USER CODE END controlTaskStart */
+}
+
+/* USER CODE BEGIN Header_diplayTaskStart */
+/**
+* @brief Function implementing the displayTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_diplayTaskStart */
+void diplayTaskStart(void *argument)
+{
+  /* USER CODE BEGIN diplayTaskStart */
+  /* Infinite loop */
+  for(;;)
+  {
     display_update();
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     osDelay(250);
   }
-  /* USER CODE END StartDefaultTask */
+  /* USER CODE END diplayTaskStart */
+}
+
+/* USER CODE BEGIN Header_canTaskStart */
+/**
+* @brief Function implementing the canTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_canTaskStart */
+void canTaskStart(void *argument)
+{
+  /* USER CODE BEGIN canTaskStart */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(100);
+  }
+  /* USER CODE END canTaskStart */
 }
 
 /* canSendTimerCallback function */

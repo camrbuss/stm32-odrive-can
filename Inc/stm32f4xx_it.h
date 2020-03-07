@@ -60,6 +60,7 @@ void CAN1_RX0_IRQHandler(void);
 void CAN1_RX1_IRQHandler(void);
 void CAN1_SCE_IRQHandler(void);
 void TIM3_IRQHandler(void);
+void SPI2_IRQHandler(void);
 void USART2_IRQHandler(void);
 void EXTI15_10_IRQHandler(void);
 void TIM8_TRG_COM_TIM14_IRQHandler(void);
