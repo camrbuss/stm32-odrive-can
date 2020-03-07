@@ -5,6 +5,7 @@
 #include "stm32f4xx_hal.h"
 #include "spi.h"
 #include "string.h"
+#include "freertos_vars.h"
 
 u8g2_t _u8g2;
 
@@ -127,6 +128,27 @@ uint8_t display_add_float_line(char *prefix, float value, uint8_t line_number)
     char value_buf[8]; 
     gcvt(value, 4, value_buf);
     u8g2_DrawStr(&_u8g2, (prefix_length + 2) * 8, line_number * 8, value_buf); 
+
+    return 1;
+}
+
+uint8_t display_add_string_line(char *string, uint8_t line_number)
+{
+    uint8_t string_length = strlen(string);
+
+    if (string_length > 16)
+    {
+        // string is too long to support a single row, so truncate it
+        return 0;
+    }
+
+    if (line_number > 8)
+    {
+        // Only 8 lines are supported
+        return 0;
+    }
+
+    u8g2_DrawStr(&_u8g2, 0, line_number * 8, string);
 
     return 1;
 }

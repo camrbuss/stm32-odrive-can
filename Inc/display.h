@@ -11,5 +11,6 @@ uint8_t u8g2_gpio_and_delay_stm32(U8X8_UNUSED u8x8_t *u8x8, U8X8_UNUSED uint8_t 
 void display_init(void);
 void display_update(void);
 uint8_t display_add_float_line(char *prefix, float value, uint8_t line_number);
+uint8_t display_add_string_line(char *string, uint8_t line_number);
 
 #endif /* __DISPLAY_H */
