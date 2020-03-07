@@ -10,7 +10,8 @@
 			"main.h": "c",
 			"stm32f4xx_hal.h": "c",
 			"freertos.h": "c",
-			"typeinfo": "c"
+			"typeinfo": "c",
+			"can.h": "c"
 		}
 	}
 }

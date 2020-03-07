@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
 #include "display.h"
+#include "odrive_can.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,6 +80,11 @@ osTimerId_t canSendTimerHandle;
 const osTimerAttr_t canSendTimer_attributes = {
   .name = "canSendTimer"
 };
+/* Definitions for canInterruptBinarySem */
+osSemaphoreId_t canInterruptBinarySemHandle;
+const osSemaphoreAttr_t canInterruptBinarySem_attributes = {
+  .name = "canInterruptBinarySem"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -106,6 +112,10 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
+
+  /* Create the semaphores(s) */
+  /* creation of canInterruptBinarySem */
+  canInterruptBinarySemHandle = osSemaphoreNew(1, 1, &canInterruptBinarySem_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -195,10 +205,12 @@ void diplayTaskStart(void *argument)
 void canTaskStart(void *argument)
 {
   /* USER CODE BEGIN canTaskStart */
+  odrive_can_init(0);
   /* Infinite loop */
   for(;;)
   {
-    osDelay(100);
+    odrive_can_send(0);
+    osDelay(1000);
   }
   /* USER CODE END canTaskStart */
 }

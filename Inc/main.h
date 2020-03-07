@@ -82,6 +82,9 @@ void Error_Handler(void);
 #define LCD_CS_Pin GPIO_PIN_14
 #define LCD_RESET_GPIO_Port GPIOB
 #define LCD_RESET_Pin GPIO_PIN_13
+
+#define AXIS0_NODE_ID (3 << 5)
+#define AXIS1_NODE_ID (1 << 5)
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

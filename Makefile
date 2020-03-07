@@ -77,6 +77,7 @@ Src/tim.c \
 Src/usart.c \
 Src/spi.c \
 Src/display.c \
+Src/odrive_can.c \
 Src/u8g2/u8g2_bitmap.c \
 Src/u8g2/u8g2_box.c \
 Src/u8g2/u8g2_buffer.c \

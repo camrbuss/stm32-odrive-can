@@ -7,5 +7,6 @@ extern osTimerId_t canSendTimerHandle;
 extern osThreadId_t controlTaskHandle;
 extern osThreadId_t displayTaskHandle;
 extern osThreadId_t canTaskHandle;
+extern osSemaphoreId_t canInterruptBinarySemHandle;
 
 #endif /* __FREERTOS_H */
