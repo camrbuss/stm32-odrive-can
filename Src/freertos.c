@@ -85,6 +85,11 @@ osSemaphoreId_t canInterruptBinarySemHandle;
 const osSemaphoreAttr_t canInterruptBinarySem_attributes = {
   .name = "canInterruptBinarySem"
 };
+/* Definitions for displayBinarySem */
+osSemaphoreId_t displayBinarySemHandle;
+const osSemaphoreAttr_t displayBinarySem_attributes = {
+  .name = "displayBinarySem"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -117,7 +122,12 @@ void MX_FREERTOS_Init(void) {
   /* creation of canInterruptBinarySem */
   canInterruptBinarySemHandle = osSemaphoreNew(1, 1, &canInterruptBinarySem_attributes);
 
+  /* creation of displayBinarySem */
+  displayBinarySemHandle = osSemaphoreNew(1, 1, &displayBinarySem_attributes);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
+  // Grab the semaphore so the diplay task won't update until released
+  osSemaphoreAcquire(displayBinarySemHandle, 0);
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
@@ -166,11 +176,13 @@ void controlTaskStart(void *argument)
   /* USER CODE BEGIN controlTaskStart */
   // Adding display related task to start of the control task as it has higher priority
   display_init();
+
   /* Infinite loop */
   for(;;)
   {
     uint32_t count = osKernelGetTickCount();
     display_add_float_line("Ticks", count, 1);
+    osSemaphoreRelease(displayBinarySemHandle);
     osDelay(100);
   }
   /* USER CODE END controlTaskStart */
@@ -189,8 +201,9 @@ void diplayTaskStart(void *argument)
   /* Infinite loop */
   for(;;)
   {
+    // Wait for another thread to release the semaphore which will call a display update
+    osSemaphoreAcquire(displayBinarySemHandle, osWaitForever);
     display_update();
-    osDelay(250);
   }
   /* USER CODE END diplayTaskStart */
 }
@@ -209,7 +222,7 @@ void canTaskStart(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    odrive_can_send(0);
+    odrive_can_send(0, 0x17);
     osDelay(1000);
   }
   /* USER CODE END canTaskStart */
