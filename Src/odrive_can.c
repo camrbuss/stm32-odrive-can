@@ -2,8 +2,10 @@
 #include "stm32f4xx_hal_can.h"
 #include "can.h"
 #include "odrive_can.h"
+#include "freertos_vars.h"
+#include "cmsis_os.h"
 
-void odrive_can_init(Axis_t axis)
+uint8_t odrive_can_init(Axis_t axis)
 {
     CAN_FilterTypeDef filter;
     filter.FilterActivation = ENABLE;
@@ -34,7 +36,7 @@ void odrive_can_init(Axis_t axis)
     HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 }
 
-void odrive_can_send(Axis_t axis, Odrive_msg_t msg)
+uint8_t odrive_can_send(Axis_t axis, Odrive_msg_t msg)
 {
     uint32_t can_error = HAL_CAN_GetError(&hcan1);
     if (can_error == HAL_CAN_ERROR_NONE) // HAL_CAN_GetError()
@@ -78,14 +80,20 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
     // HAL_CAN_DeactivateNotification(hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
     // osSemaphoreRelease(canInterruptBinarySemHandle);
-    uint8_t buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     while (HAL_CAN_GetRxFifoFillLevel(hcan, CAN_RX_FIFO0))
     {
         CAN_RxHeaderTypeDef header;
         uint8_t validRead = 0;
         if (HAL_CAN_GetRxFifoFillLevel(hcan, CAN_RX_FIFO0) > 0)
         {
-            HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &header, buf);
+            Can_Message_t rxmsg;
+            HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &header, rxmsg.buf);
+
+            rxmsg.id = header.StdId; 
+            rxmsg.len = header.DLC;
+            rxmsg.rtr = header.RTR;
+            osMessageQueuePut(canRxBufferHandle, &rxmsg, 0, 0);
+
             validRead = 1;
         }
     }

@@ -25,7 +25,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 #include "display.h"
 #include "odrive_can.h"
 /* USER CODE END Includes */
@@ -52,48 +52,44 @@
 /* Definitions for controlTask */
 osThreadId_t controlTaskHandle;
 const osThreadAttr_t controlTask_attributes = {
-  .name = "controlTask",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
-};
+    .name = "controlTask",
+    .priority = (osPriority_t)osPriorityNormal,
+    .stack_size = 128 * 4};
 /* Definitions for displayTask */
 osThreadId_t displayTaskHandle;
 const osThreadAttr_t displayTask_attributes = {
-  .name = "displayTask",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
-};
+    .name = "displayTask",
+    .priority = (osPriority_t)osPriorityLow,
+    .stack_size = 128 * 4};
 /* Definitions for canTask */
 osThreadId_t canTaskHandle;
 const osThreadAttr_t canTask_attributes = {
-  .name = "canTask",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
-};
+    .name = "canTask",
+    .priority = (osPriority_t)osPriorityNormal,
+    .stack_size = 256 * 4};
 /* Definitions for canCommandsQueue */
 osMessageQueueId_t canCommandsQueueHandle;
 const osMessageQueueAttr_t canCommandsQueue_attributes = {
-  .name = "canCommandsQueue"
-};
+    .name = "canCommandsQueue"};
+/* Definitions for canRxBuffer */
+osMessageQueueId_t canRxBufferHandle;
+const osMessageQueueAttr_t canRxBuffer_attributes = {
+    .name = "canRxBuffer"};
 /* Definitions for canSendTimer */
 osTimerId_t canSendTimerHandle;
 const osTimerAttr_t canSendTimer_attributes = {
-  .name = "canSendTimer"
-};
+    .name = "canSendTimer"};
 /* Definitions for canInterruptBinarySem */
 osSemaphoreId_t canInterruptBinarySemHandle;
 const osSemaphoreAttr_t canInterruptBinarySem_attributes = {
-  .name = "canInterruptBinarySem"
-};
+    .name = "canInterruptBinarySem"};
 /* Definitions for displayBinarySem */
 osSemaphoreId_t displayBinarySemHandle;
 const osSemaphoreAttr_t displayBinarySem_attributes = {
-  .name = "displayBinarySem"
-};
+    .name = "displayBinarySem"};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
 
 /* USER CODE END FunctionPrototypes */
 
@@ -109,7 +105,8 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   * @param  None
   * @retval None
   */
-void MX_FREERTOS_Init(void) {
+void MX_FREERTOS_Init(void)
+{
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -142,7 +139,10 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of canCommandsQueue */
-  canCommandsQueueHandle = osMessageQueueNew (8, sizeof(uint16_t), &canCommandsQueue_attributes);
+  canCommandsQueueHandle = osMessageQueueNew(8, sizeof(uint16_t), &canCommandsQueue_attributes);
+
+  /* creation of canRxBuffer */
+  canRxBufferHandle = osMessageQueueNew(8, sizeof(Can_Message_t), &canRxBuffer_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -161,7 +161,6 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
-
 }
 
 /* USER CODE BEGIN Header_controlTaskStart */
@@ -178,9 +177,10 @@ void controlTaskStart(void *argument)
   display_init();
 
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
     uint32_t count = osKernelGetTickCount();
+
     display_add_float_line("Ticks", count, 1);
     osSemaphoreRelease(displayBinarySemHandle);
     osDelay(100);
@@ -199,7 +199,7 @@ void diplayTaskStart(void *argument)
 {
   /* USER CODE BEGIN diplayTaskStart */
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
     // Wait for another thread to release the semaphore which will call a display update
     osSemaphoreAcquire(displayBinarySemHandle, osWaitForever);
@@ -218,13 +218,19 @@ void diplayTaskStart(void *argument)
 void canTaskStart(void *argument)
 {
   /* USER CODE BEGIN canTaskStart */
-  // odrive_can_init(0);
-  osDelay(100);
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
     odrive_can_send(AXIS_0, MSG_GET_VBUS_VOLTAGE);
-    osDelay(1000);
+    Can_Message_t msg;
+    osMessageQueueGet(canRxBufferHandle, &msg, NULL, osWaitForever);
+    if (msg.id == 0x77)
+    {
+      floatunion_t v_bus;
+      v_bus.a = (msg.buf[3] << 24) | (msg.buf[2] << 16) | (msg.buf[1] << 8) | (msg.buf[0] << 0);
+      display_add_float_line("Vbus", v_bus.f, 2);
+    }
+    osDelay(100);
   }
   /* USER CODE END canTaskStart */
 }

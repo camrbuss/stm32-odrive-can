@@ -2,7 +2,7 @@
 Mcu.Family=STM32F4
 ProjectManager.MainLocation=Src
 PH0-OSC_IN.Locked=true
-FREERTOS.Queues01=canCommandsQueue,8,uint16_t,0,Dynamic,NULL,NULL
+FREERTOS.Queues01=canCommandsQueue,8,uint16_t,0,Dynamic,NULL,NULL;canRxBuffer,8,Can_Message_t,0,Dynamic,NULL,NULL
 NVIC.CAN1_RX1_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true
 CAN1.NART=DISABLE
 SH.S_TIM4_CH2.ConfNb=1
@@ -164,7 +164,7 @@ PC15-OSC32_OUT.Mode=LSE-External-Oscillator
 SH.S_TIM4_CH1.ConfNb=1
 Dma.USART2_TX.1.Priority=DMA_PRIORITY_LOW
 ProjectManager.ProjectFileName=stm32-odrive-can.ioc
-FREERTOS.Tasks01=controlTask,24,128,controlTaskStart,Default,NULL,Dynamic,NULL,NULL;displayTask,8,128,diplayTaskStart,Default,NULL,Dynamic,NULL,NULL;canTask,24,128,canTaskStart,Default,NULL,Dynamic,NULL,NULL
+FREERTOS.Tasks01=controlTask,24,128,controlTaskStart,Default,NULL,Dynamic,NULL,NULL;displayTask,8,128,diplayTaskStart,Default,NULL,Dynamic,NULL,NULL;canTask,24,256,canTaskStart,Default,NULL,Dynamic,NULL,NULL
 Mcu.PinsNb=24
 Dma.USART2_TX.1.FIFOMode=DMA_FIFOMODE_DISABLE
 ProjectManager.NoMain=false

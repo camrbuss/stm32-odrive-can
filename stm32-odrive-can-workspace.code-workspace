@@ -11,7 +11,9 @@
 			"stm32f4xx_hal.h": "c",
 			"freertos.h": "c",
 			"typeinfo": "c",
-			"can.h": "c"
+			"can.h": "c",
+			"odrive_can.h": "c",
+			"stm32f4xx_hal_can.h": "c"
 		}
 	}
 }
