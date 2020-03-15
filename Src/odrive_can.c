@@ -41,16 +41,40 @@ uint8_t odrive_can_init(Axis_t axis)
 
 uint8_t odrive_handle_msg(CanMessage_t *msg)
 {
-    switch (msg->id)
+    uint8_t first_word[4];
+    uint8_t second_word[4];
+    if (msg->len == 8)
     {
-    case (MSG_GET_VBUS_VOLTAGE | AXIS0_NODE_ID):
-        vbus_voltage.a = (msg->buf[3] << 24) | (msg->buf[2] << 16) | (msg->buf[1] << 8) | (msg->buf[0] << 0);
-        break;
-    
-    default:
-        return 1;
-        break;
+        memcpy(&first_word, &msg->buf, 4);
+        second_word[3] = msg->buf[3];
+        second_word[2] = msg->buf[2];
+        second_word[1] = msg->buf[1];
+        second_word[0] = msg->buf[0];
     }
+    if (msg->rtr == 0)
+    {
+        switch (msg->id)
+        {
+        case (MSG_GET_ENCODER_ESTIMATES | AXIS0_NODE_ID):
+            memcpy(&odrive_get_axis0.encoder_pos_estimate, &first_word, sizeof(float));
+            memcpy(&odrive_get_axis0.encoder_vel_estimate, &second_word, sizeof(float));
+            break;
+        case (MSG_GET_ENCODER_ESTIMATES | AXIS1_NODE_ID):
+            memcpy(&odrive_get_axis1.encoder_pos_estimate, &first_word, sizeof(float));
+            memcpy(&odrive_get_axis1.encoder_vel_estimate, &second_word, sizeof(float));
+            break;
+        case (MSG_GET_VBUS_VOLTAGE | AXIS0_NODE_ID):
+            memcpy(&odrive_state.vbus_voltage, &first_word, sizeof(float));
+            break;
+        case (MSG_GET_VBUS_VOLTAGE | AXIS1_NODE_ID):
+            memcpy(&odrive_state.vbus_voltage, &first_word, sizeof(float));
+            break;
+        default:
+            return 1;
+            break;
+        }
+    }
+
     return 0;
 }
 

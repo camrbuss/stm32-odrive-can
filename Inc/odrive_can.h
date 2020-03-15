@@ -70,7 +70,52 @@ typedef union {
     uint32_t a;
 } FloatUnion_t;
 
-FloatUnion_t vbus_voltage;
+typedef struct
+{
+    uint32_t axis_error;
+    uint32_t current_state;
+    uint32_t motor_error;
+    uint32_t encoder_error;
+    uint32_t sensorless_error;
+    float encoder_pos_estimate;
+    float encoder_vel_estimate;
+    int32_t encoder_shadow_count;
+    int32_t encoder_cpr_count;
+    float iq_setpoint;
+    float iq_measured;
+    float sensorless_pos_estimate;
+    float sensorless_vel_estimate;
+} OdriveAxisGetState_t;
+
+typedef struct
+{
+    uint16_t axis_node_id;
+    uint32_t requested_state;
+    int32_t control_mode;
+    int32_t input_mode;
+    int16_t vel_ff;
+    int16_t current_ff;
+    int32_t input_pos;
+    int32_t input_vel;
+    int32_t input_current;
+    float vel_limit;
+    float traj_vel_limit;
+    float traj_accel_limit;
+    float traj_decel_limit;
+    float traj_a_per_css;
+} OdriveAxisSetState_t;
+
+typedef struct
+{
+    float vbus_voltage;
+} OdriveState_t;
+
+OdriveState_t odrive_state;
+OdriveAxisSetState_t odrive_set_axis0;
+OdriveAxisGetState_t odrive_get_axis0;
+OdriveAxisSetState_t odrive_set_axis1;
+OdriveAxisGetState_t odrive_get_axis1;
+
 
 // struct Config_t
 // {

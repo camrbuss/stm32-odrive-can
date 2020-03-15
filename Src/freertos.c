@@ -181,11 +181,13 @@ void controlTaskStart(void *argument)
   {
     uint32_t count = osKernelGetTickCount();
     odrive_can_send(AXIS_0, MSG_GET_VBUS_VOLTAGE);
+    odrive_can_send(AXIS_0, MSG_GET_ENCODER_ESTIMATES);
 
     display_add_float_line("Ticks", count, 1);
     uint32_t msg_count = osMessageQueueGetCount(canRxBufferHandle);
     display_add_float_line("MsgQ", msg_count, 2);
-    display_add_float_line("Vbus", vbus_voltage.f, 3);
+    display_add_float_line("Vbus", odrive_state.vbus_voltage, 3);
+    display_add_float_line("Enc", odrive_get_axis0.encoder_pos_estimate, 4);
     osSemaphoreRelease(displayBinarySemHandle);
     osDelay(1000);
   }
