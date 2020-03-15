@@ -6,6 +6,7 @@
 #include "spi.h"
 #include "string.h"
 #include "freertos_vars.h"
+#include "display.h"
 
 u8g2_t _u8g2;
 
@@ -108,28 +109,36 @@ void display_init(void)
 
 uint8_t display_add_float_line(char *prefix, float value, uint8_t line_number)
 {
+
     uint8_t prefix_length = strlen(prefix);
 
-    if (prefix_length > 6)
+    if (prefix_length > DISPLAY_MAX_PREFIX_LENGTH)
     {
         // Prefix is too long to support a single row
-        return 0;
+        return 1;
     }
 
     if (line_number > 8)
     {
         // Only 8 lines are supported
-        return 0;
+        return 1;
     }
 
     u8g2_DrawStr(&_u8g2, 0, line_number * 8, prefix);
-    u8g2_DrawStr(&_u8g2, prefix_length * 8, line_number * 8, ": ");
 
-    char value_buf[8];
+    for (uint8_t i; i < DISPLAY_MAX_PREFIX_LENGTH - prefix_length; i++)
+    {
+        u8g2_DrawStr(&_u8g2, (prefix_length * 8 + i + 1), line_number * 8, " ");
+    }
+
+    char value_buf[10];
     gcvt(value, 4, value_buf);
-    u8g2_DrawStr(&_u8g2, (prefix_length + 2) * 8, line_number * 8, value_buf);
+    // Clear the previous string
+    u8g2_DrawStr(&_u8g2, DISPLAY_MAX_PREFIX_LENGTH * 8, line_number * 8, "          ");
+    // Place the float value in the last 9 digits
+    u8g2_DrawStr(&_u8g2, DISPLAY_MAX_PREFIX_LENGTH * 8, line_number * 8, value_buf);
 
-    return 1;
+    return 0;
 }
 
 uint8_t display_add_string_line(char *string, uint8_t line_number)
@@ -139,18 +148,18 @@ uint8_t display_add_string_line(char *string, uint8_t line_number)
     if (string_length > 16)
     {
         // string is too long to support a single row, so truncate it
-        return 0;
+        return 1;
     }
 
     if (line_number > 8)
     {
         // Only 8 lines are supported
-        return 0;
+        return 1;
     }
 
     u8g2_DrawStr(&_u8g2, 0, line_number * 8, string);
 
-    return 1;
+    return 0;
 }
 
 void display_update(void)
