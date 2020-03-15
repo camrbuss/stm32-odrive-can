@@ -23,6 +23,7 @@ uint8_t odrive_can_init(Axis_t axis)
     {
         /* Start Error */
         Error_Handler();
+        return 1;
     }
 
     status = HAL_CAN_Start(&hcan1);
@@ -31,12 +32,29 @@ uint8_t odrive_can_init(Axis_t axis)
     {
         /* Start Error */
         Error_Handler();
+        return 1;
     }
 
     HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+    return 0;
 }
 
-uint8_t odrive_can_send(Axis_t axis, Odrive_msg_t msg)
+uint8_t odrive_handle_msg(CanMessage_t *msg)
+{
+    switch (msg->id)
+    {
+    case (MSG_GET_VBUS_VOLTAGE | AXIS0_NODE_ID):
+        vbus_voltage.a = (msg->buf[3] << 24) | (msg->buf[2] << 16) | (msg->buf[1] << 8) | (msg->buf[0] << 0);
+        break;
+    
+    default:
+        return 1;
+        break;
+    }
+    return 0;
+}
+
+uint8_t odrive_can_send(Axis_t axis, OdriveMsg_t msg)
 {
     uint32_t can_error = HAL_CAN_GetError(&hcan1);
     if (can_error == HAL_CAN_ERROR_NONE) // HAL_CAN_GetError()
@@ -83,18 +101,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     while (HAL_CAN_GetRxFifoFillLevel(hcan, CAN_RX_FIFO0))
     {
         CAN_RxHeaderTypeDef header;
-        uint8_t validRead = 0;
         if (HAL_CAN_GetRxFifoFillLevel(hcan, CAN_RX_FIFO0) > 0)
         {
-            Can_Message_t rxmsg;
+            CanMessage_t rxmsg;
             HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &header, rxmsg.buf);
 
-            rxmsg.id = header.StdId; 
+            rxmsg.id = header.StdId;
             rxmsg.len = header.DLC;
             rxmsg.rtr = header.RTR;
             osMessageQueuePut(canRxBufferHandle, &rxmsg, 0, 0);
-
-            validRead = 1;
         }
     }
 }

@@ -142,7 +142,7 @@ void MX_FREERTOS_Init(void)
   canCommandsQueueHandle = osMessageQueueNew(8, sizeof(uint16_t), &canCommandsQueue_attributes);
 
   /* creation of canRxBuffer */
-  canRxBufferHandle = osMessageQueueNew(8, sizeof(Can_Message_t), &canRxBuffer_attributes);
+  canRxBufferHandle = osMessageQueueNew(8, sizeof(CanMessage_t), &canRxBuffer_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -180,10 +180,14 @@ void controlTaskStart(void *argument)
   for (;;)
   {
     uint32_t count = osKernelGetTickCount();
+    odrive_can_send(AXIS_0, MSG_GET_VBUS_VOLTAGE);
 
     display_add_float_line("Ticks", count, 1);
+    uint32_t msg_count = osMessageQueueGetCount(canRxBufferHandle);
+    display_add_float_line("MsgQ", msg_count, 2);
+    display_add_float_line("Vbus", vbus_voltage.f, 3);
     osSemaphoreRelease(displayBinarySemHandle);
-    osDelay(100);
+    osDelay(1000);
   }
   /* USER CODE END controlTaskStart */
 }
@@ -221,16 +225,13 @@ void canTaskStart(void *argument)
   /* Infinite loop */
   for (;;)
   {
-    odrive_can_send(AXIS_0, MSG_GET_VBUS_VOLTAGE);
-    Can_Message_t msg;
+    CanMessage_t msg;
     osMessageQueueGet(canRxBufferHandle, &msg, NULL, osWaitForever);
-    if (msg.id == 0x77)
-    {
-      floatunion_t v_bus;
-      v_bus.a = (msg.buf[3] << 24) | (msg.buf[2] << 16) | (msg.buf[1] << 8) | (msg.buf[0] << 0);
-      display_add_float_line("Vbus", v_bus.f, 2);
-    }
-    osDelay(100);
+    odrive_handle_msg(&msg);
+    // if (msg.id == MSG_GET_VBUS_VOLTAGE)
+    // {
+    //   vbus_voltage.a = (msg.buf[3] << 24) | (msg.buf[2] << 16) | (msg.buf[1] << 8) | (msg.buf[0] << 0);
+    // }
   }
   /* USER CODE END canTaskStart */
 }

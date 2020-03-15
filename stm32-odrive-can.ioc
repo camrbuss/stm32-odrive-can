@@ -2,7 +2,7 @@
 Mcu.Family=STM32F4
 ProjectManager.MainLocation=Src
 PH0-OSC_IN.Locked=true
-FREERTOS.Queues01=canCommandsQueue,8,uint16_t,0,Dynamic,NULL,NULL;canRxBuffer,8,Can_Message_t,0,Dynamic,NULL,NULL
+FREERTOS.Queues01=canCommandsQueue,8,uint16_t,0,Dynamic,NULL,NULL;canRxBuffer,8,CanMessage_t,0,Dynamic,NULL,NULL
 NVIC.CAN1_RX1_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true
 CAN1.NART=DISABLE
 SH.S_TIM4_CH2.ConfNb=1

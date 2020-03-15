@@ -55,19 +55,22 @@ typedef enum
     MSG_GET_VBUS_VOLTAGE,
     MSG_CLEAR_ERRORS,
     MSG_CO_HEARTBEAT_CMD = 0x700, // CANOpen NMT Heartbeat  SEND
-} Odrive_msg_t;
+} OdriveMsg_t;
 
-typedef struct {
-    uint16_t id;  // 11-bit max is 0x7ff, 29-bit max is 0x1FFFFFFF
+typedef struct
+{
+    uint16_t id; // 11-bit max is 0x7ff, 29-bit max is 0x1FFFFFFF
     uint8_t rtr;
     uint8_t len;
     uint8_t buf[8];
-} Can_Message_t;
+} CanMessage_t;
 
- typedef union {
+typedef union {
     float f;
     uint32_t a;
-} floatunion_t;
+} FloatUnion_t;
+
+FloatUnion_t vbus_voltage;
 
 // struct Config_t
 // {
@@ -76,7 +79,8 @@ typedef struct {
 // } _odrive_can;
 
 uint8_t odrive_can_init(Axis_t axis);
-uint8_t odrive_can_send(Axis_t axis, Odrive_msg_t msg);
+uint8_t odrive_handle_msg(CanMessage_t *msg);
+uint8_t odrive_can_send(Axis_t axis, OdriveMsg_t msg);
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
 

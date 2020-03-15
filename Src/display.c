@@ -125,9 +125,9 @@ uint8_t display_add_float_line(char *prefix, float value, uint8_t line_number)
     u8g2_DrawStr(&_u8g2, 0, line_number * 8, prefix);
     u8g2_DrawStr(&_u8g2, prefix_length * 8, line_number * 8, ": ");
 
-    char value_buf[8]; 
+    char value_buf[8];
     gcvt(value, 4, value_buf);
-    u8g2_DrawStr(&_u8g2, (prefix_length + 2) * 8, line_number * 8, value_buf); 
+    u8g2_DrawStr(&_u8g2, (prefix_length + 2) * 8, line_number * 8, value_buf);
 
     return 1;
 }
