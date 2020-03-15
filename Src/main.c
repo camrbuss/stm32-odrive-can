@@ -30,6 +30,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "odrive_can.h"
 
 /* USER CODE END Includes */
 
@@ -122,46 +123,7 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
-  pFilter.FilterActivation = ENABLE;
-  pFilter.FilterBank = 0;
-  pFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
-  pFilter.FilterIdHigh = 0x0000;
-  pFilter.FilterIdLow = 0x0000;
-  pFilter.FilterMaskIdHigh = 0x0000;
-  pFilter.FilterMaskIdLow = 0x0000;
-  pFilter.FilterMode = CAN_FILTERMODE_IDMASK;
-  pFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-
-  status = HAL_CAN_ConfigFilter(&hcan1, &pFilter);
-
-  pTxHeaderGetVBus.StdId = AXIS0_NODE_ID + 0x17; //MSG_GET_VBUS_VOLTAGE;
-  pTxHeaderGetVBus.IDE = CAN_ID_STD;
-  pTxHeaderGetVBus.RTR = CAN_RTR_REMOTE;
-  pTxHeaderGetVBus.DLC = sizeof(tData);
-
-  status = HAL_CAN_Start(&hcan1);
-
-  if (status != HAL_OK)
-  {
-    /* Start Error */
-    Error_Handler();
-  }
-
-  // status = HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
-
-  /* Request transmission */
-  // status = HAL_CAN_AddTxMessage(&hcan1, &pTxHeaderGetVBus, tData, &TxMailbox);
-
-  if (status != HAL_OK)
-  {
-    /* Transmission request Error */
-    Error_Handler();
-  }
-
-  /* Wait transmission complete */
-  while (HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) != 3)
-  {
-  }
+  odrive_can_init(AXIS_0);
 
   /* USER CODE END 2 */
 
@@ -176,28 +138,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // if(flag1) {
-    //   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-    //   status = HAL_CAN_AddTxMessage(&hcan1, &pTxHeaderGetVBus, tData, &TxMailbox);
-    //   while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) != 3) {}
-    //   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-    //   flag1 = 0;
-    // }
-
-    // if (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0) > 0) {
-    //     HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &pRxHeader, rData);
-    //     if (pRxHeader.StdId == 119) {
-    //       u.ul = (rData[0] << 0) | (rData[1] << 8) | (rData[2] << 16) | (rData[3] << 24);
-    //       // printf("Bus Voltage: %d\n", u.f);
-
-    //       // printf("Bus Voltage: %x %x %x %x %x %x %x %x\n", rData[0], rData[1], rData[2], rData[3], rData[4], rData[5], rData[6], rData[7]);
-    //     } else {
-    //       // printf("pRxHeader.DLC: %lu\n", pRxHeader.StdId);
-    //     }
-
-    // } else if (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO1) > 0) {
-    //     HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO1, &pRxHeader, rData);
-    // }
 
     /* USER CODE END WHILE */
 

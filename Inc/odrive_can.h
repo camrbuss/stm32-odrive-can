@@ -1,31 +1,61 @@
 #ifndef __ODRIVE_CAN_H
 #define __ODRIVE_CAN_H
 
-enum Axis_t
+typedef enum
 {
     AXIS_0 = 0,
     AXIS_1 = 1
-};
+} Axis_t;
 
-// enum ControlMode_t
-// {
-//     CTRL_MODE_VOLTAGE_CONTROL = 0,
-//     CTRL_MODE_CURRENT_CONTROL = 1,
-//     CTRL_MODE_VELOCITY_CONTROL = 2,
-//     CTRL_MODE_POSITION_CONTROL = 3
-// };
+typedef enum
+{
+    CTRL_MODE_VOLTAGE_CONTROL = 0,
+    CTRL_MODE_CURRENT_CONTROL = 1,
+    CTRL_MODE_VELOCITY_CONTROL = 2,
+    CTRL_MODE_POSITION_CONTROL = 3
+} ControlMode_t;
 
-// enum InputMode_t
-// {
-//     INPUT_MODE_INACTIVE,
-//     INPUT_MODE_PASSTHROUGH,
-//     INPUT_MODE_VEL_RAMP,
-//     INPUT_MODE_POS_FILTER,
-//     INPUT_MODE_MIX_CHANNELS,
-//     INPUT_MODE_TRAP_TRAJ,
-//     INPUT_MODE_CURRENT_RAMP,
-//     INPUT_MODE_MIRROR,
-// };
+typedef enum
+{
+    INPUT_MODE_INACTIVE,
+    INPUT_MODE_PASSTHROUGH,
+    INPUT_MODE_VEL_RAMP,
+    INPUT_MODE_POS_FILTER,
+    INPUT_MODE_MIX_CHANNELS,
+    INPUT_MODE_TRAP_TRAJ,
+    INPUT_MODE_CURRENT_RAMP,
+    INPUT_MODE_MIRROR,
+} InputMode_t;
+
+typedef enum
+{
+    MSG_CO_NMT_CTRL = 0x000, // CANOpen NMT Message REC
+    MSG_ODRIVE_HEARTBEAT,
+    MSG_ODRIVE_ESTOP,
+    MSG_GET_MOTOR_ERROR, // Errors
+    MSG_GET_ENCODER_ERROR,
+    MSG_GET_SENSORLESS_ERROR,
+    MSG_SET_AXIS_NODE_ID,
+    MSG_SET_AXIS_REQUESTED_STATE,
+    MSG_SET_AXIS_STARTUP_CONFIG,
+    MSG_GET_ENCODER_ESTIMATES,
+    MSG_GET_ENCODER_COUNT,
+    MSG_SET_CONTROLLER_MODES,
+    MSG_SET_INPUT_POS,
+    MSG_SET_INPUT_VEL,
+    MSG_SET_INPUT_CURRENT,
+    MSG_SET_VEL_LIMIT,
+    MSG_START_ANTICOGGING,
+    MSG_SET_TRAJ_VEL_LIMIT,
+    MSG_SET_TRAJ_ACCEL_LIMITS,
+    MSG_SET_TRAJ_A_PER_CSS,
+    MSG_GET_IQ,
+    MSG_GET_SENSORLESS_ESTIMATES,
+    MSG_RESET_ODRIVE,
+    MSG_GET_VBUS_VOLTAGE,
+    MSG_CLEAR_ERRORS,
+    MSG_CO_HEARTBEAT_CMD = 0x700, // CANOpen NMT Heartbeat  SEND
+} Odrive_msg_t;
 
 // struct Config_t
 // {
@@ -33,9 +63,10 @@ enum Axis_t
 //     InputMode_t input_mode = INPUT_MODE_PASSTHROUGH;         //see: InputMode_t
 // } _odrive_can;
 
+void odrive_can_init(Axis_t axis);
+void odrive_can_send(Axis_t axis, Odrive_msg_t msg);
 
-void odrive_can_init(uint8_t axis);
-void odrive_can_send(uint8_t axis);
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
 
 // void odrive_can_update_config(Axis_t axis, float pos);
 // void odrive_can_enable_control(Axis_t axis, ControlMode_t mode);

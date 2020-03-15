@@ -218,11 +218,12 @@ void diplayTaskStart(void *argument)
 void canTaskStart(void *argument)
 {
   /* USER CODE BEGIN canTaskStart */
-  odrive_can_init(0);
+  // odrive_can_init(0);
+  osDelay(100);
   /* Infinite loop */
   for(;;)
   {
-    odrive_can_send(0, 0x17);
+    odrive_can_send(AXIS_0, MSG_GET_VBUS_VOLTAGE);
     osDelay(1000);
   }
   /* USER CODE END canTaskStart */
