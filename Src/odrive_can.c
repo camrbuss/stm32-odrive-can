@@ -52,13 +52,17 @@ uint8_t odrive_handle_msg(CanMessage_t *msg)
         second_word[1] = msg->buf[5];
         second_word[0] = msg->buf[4];
     }
+    else if (msg->len == 4)
+    {
+        memcpy(&first_word, &msg->buf, 4);
+    }
 
     OdriveAxisGetState_t *odrive_get;
-    if (msg->id & AXIS0_NODE_ID == AXIS0_NODE_ID) //  Mask off the first 5 bits of the 11 bit id
+    if ((msg->id & AXIS0_NODE_ID) == AXIS0_NODE_ID) //  Mask off the first 5 bits of the 11 bit id
     {
         odrive_get = &odrive_get_axis0;
     }
-    else if (msg->id & AXIS1_NODE_ID == AXIS1_NODE_ID)
+    else if ((msg->id & AXIS1_NODE_ID) == AXIS1_NODE_ID)
     {
         odrive_get = &odrive_get_axis1;
     }
@@ -78,6 +82,16 @@ uint8_t odrive_handle_msg(CanMessage_t *msg)
         case (MSG_GET_ENCODER_ESTIMATES):
             memcpy(&odrive_get->encoder_pos_estimate, &first_word, sizeof(float));
             memcpy(&odrive_get->encoder_vel_estimate, &second_word, sizeof(float));
+            break;
+        case (MSG_GET_ENCODER_COUNT):
+            memcpy(&odrive_get->encoder_shadow_count, &first_word, sizeof(uint32_t));
+            memcpy(&odrive_get->encoder_cpr_count, &second_word, sizeof(uint32_t));
+            break;
+        case (MSG_GET_MOTOR_ERROR):
+            memcpy(&odrive_get->motor_error, &first_word, sizeof(uint32_t));
+            break;
+        case (MSG_GET_ENCODER_ERROR):
+            memcpy(&odrive_get->encoder_error, &first_word, sizeof(uint32_t));
             break;
         case (MSG_GET_VBUS_VOLTAGE):
             memcpy(&odrive_state.vbus_voltage, &first_word, sizeof(float));
@@ -99,6 +113,7 @@ uint8_t odrive_can_write(Axis_t axis, OdriveMsg_t msg)
         CAN_TxHeaderTypeDef header;
         header.IDE = CAN_ID_STD;
         uint8_t data[8];
+        uint8_t tmp_word[4]; // TODO: Get rid of this with better mem management
         OdriveAxisSetState_t *odrive_set;
         if (axis == AXIS_0)
         {
@@ -118,19 +133,21 @@ uint8_t odrive_can_write(Axis_t axis, OdriveMsg_t msg)
         switch (msg)
         {
         case MSG_ODRIVE_ESTOP:
-            /* code */
+            /* TODO: Implement */
             break;
         case MSG_GET_MOTOR_ERROR:
-            /* code */
+            header.RTR = CAN_RTR_REMOTE;
+            header.DLC = 0;
             break;
         case MSG_GET_ENCODER_ERROR:
-            /* code */
+            header.RTR = CAN_RTR_REMOTE;
+            header.DLC = 0;
             break;
         case MSG_GET_SENSORLESS_ERROR:
-            /* code */
+            /* TODO: Implement */
             break;
         case MSG_SET_AXIS_NODE_ID:
-            /* code */
+            /* TODO: Implement */
             break;
         case MSG_SET_AXIS_REQUESTED_STATE:
             memcpy(&data, &odrive_set->requested_state, 4);
@@ -138,14 +155,15 @@ uint8_t odrive_can_write(Axis_t axis, OdriveMsg_t msg)
             header.DLC = 4;
             break;
         case MSG_SET_AXIS_STARTUP_CONFIG:
-            /* code */
+            /* TODO: Implement */
             break;
         case MSG_GET_ENCODER_ESTIMATES:
             header.RTR = CAN_RTR_REMOTE;
             header.DLC = 0;
             break;
         case MSG_GET_ENCODER_COUNT:
-            /* code */
+            header.RTR = CAN_RTR_REMOTE;
+            header.DLC = 0;
             break;
         case MSG_SET_CONTROLLER_MODES:
             data[0] = odrive_set->control_mode;
@@ -163,44 +181,66 @@ uint8_t odrive_can_write(Axis_t axis, OdriveMsg_t msg)
             header.DLC = 8;
             break;
         case MSG_SET_INPUT_VEL:
-            /* code */
+            memcpy(&data, &odrive_set->input_vel, 4);
+            data[4] = odrive_set->current_ff & 0x00FF;
+            data[5] = odrive_set->current_ff >> 8;
+            header.RTR = CAN_RTR_DATA;
+            header.DLC = 6;
             break;
         case MSG_SET_INPUT_CURRENT:
-            /* code */
+            memcpy(&data, &odrive_set->input_current, 4);
+            header.RTR = CAN_RTR_DATA;
+            header.DLC = 4;
             break;
         case MSG_SET_VEL_LIMIT:
-            /* code */
+            memcpy(&data, &odrive_set->vel_limit, 4);
+            header.RTR = CAN_RTR_DATA;
+            header.DLC = 4;
             break;
         case MSG_START_ANTICOGGING:
-            /* code */
+            header.RTR = CAN_RTR_REMOTE;
+            header.DLC = 0;
             break;
         case MSG_SET_TRAJ_VEL_LIMIT:
-            /* code */
+            memcpy(&data, &odrive_set->traj_vel_limit, 4);
+            header.RTR = CAN_RTR_DATA;
+            header.DLC = 4;
             break;
         case MSG_SET_TRAJ_ACCEL_LIMITS:
-            /* code */
+            memcpy(&data, &odrive_set->traj_accel_limit, 4);
+            memcpy(&tmp_word, &odrive_set->traj_decel_limit, 4);
+            data[4] = tmp_word[0];
+            data[5] = tmp_word[1];
+            data[6] = tmp_word[2];
+            data[7] = tmp_word[3];
+            header.RTR = CAN_RTR_DATA;
+            header.DLC = 4;
             break;
         case MSG_SET_TRAJ_A_PER_CSS:
-            /* code */
+            memcpy(&data, &odrive_set->traj_a_per_css, 4);
+            header.RTR = CAN_RTR_DATA;
+            header.DLC = 4;
             break;
         case MSG_GET_IQ:
-            /* code */
+            /* TODO: Implement */
             break;
         case MSG_GET_SENSORLESS_ESTIMATES:
-            /* code */
+            /* TODO: Implement */
             break;
         case MSG_RESET_ODRIVE:
-            /* code */
+            header.RTR = CAN_RTR_REMOTE;
+            header.DLC = 0;
             break;
         case MSG_GET_VBUS_VOLTAGE:
             header.RTR = CAN_RTR_REMOTE;
             header.DLC = 0;
             break;
         case MSG_CLEAR_ERRORS:
-            /* code */
+            header.RTR = CAN_RTR_REMOTE;
+            header.DLC = 0;
             break;
         case MSG_CO_HEARTBEAT_CMD:
-            /* code */
+            /* TODO: Implement */
             break;
         default:
             break;
@@ -219,8 +259,6 @@ uint8_t odrive_can_write(Axis_t axis, OdriveMsg_t msg)
         return can_error;
     }
 }
-
-
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {

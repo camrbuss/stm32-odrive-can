@@ -175,6 +175,8 @@ void controlTaskStart(void *argument)
   /* USER CODE BEGIN controlTaskStart */
   // Adding display related task to start of the control task as it has higher priority
   display_init();
+  odrive_can_write(AXIS_0, MSG_CLEAR_ERRORS);
+  osDelay(1000);
   odrive_set_axis0.requested_state = AXIS_STATE_FULL_CALIBRATION_SEQUENCE;
   odrive_can_write(AXIS_0, MSG_SET_AXIS_REQUESTED_STATE);
   osDelay(100);
@@ -238,10 +240,6 @@ void canTaskStart(void *argument)
     CanMessage_t msg;
     osMessageQueueGet(canRxBufferHandle, &msg, NULL, osWaitForever);
     odrive_handle_msg(&msg);
-    // if (msg.id == MSG_GET_VBUS_VOLTAGE)
-    // {
-    //   vbus_voltage.a = (msg.buf[3] << 24) | (msg.buf[2] << 16) | (msg.buf[1] << 8) | (msg.buf[0] << 0);
-    // }
   }
   /* USER CODE END canTaskStart */
 }
