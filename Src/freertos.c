@@ -134,7 +134,7 @@ void MX_FREERTOS_Init(void)
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
-  // osTimerStart(canSendTimerHandle, 1000);
+  osTimerStart(canSendTimerHandle, 10);
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
@@ -175,19 +175,27 @@ void controlTaskStart(void *argument)
   /* USER CODE BEGIN controlTaskStart */
   // Adding display related task to start of the control task as it has higher priority
   display_init();
+  odrive_set_axis0.requested_state = AXIS_STATE_FULL_CALIBRATION_SEQUENCE;
+  odrive_can_write(AXIS_0, MSG_SET_AXIS_REQUESTED_STATE);
+  osDelay(100);
+  while (odrive_get_axis0.axis_current_state != AXIS_STATE_IDLE)
+  {
+    osDelay(100);
+  }
+  odrive_set_axis0.requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL;
+  odrive_can_write(AXIS_0, MSG_SET_AXIS_REQUESTED_STATE);
 
   /* Infinite loop */
   for (;;)
   {
     uint32_t count = osKernelGetTickCount();
-    odrive_can_send(AXIS_0, MSG_GET_VBUS_VOLTAGE);
-    odrive_can_send(AXIS_0, MSG_GET_ENCODER_ESTIMATES);
 
     display_add_float_line("Ticks", count, 1);
     uint32_t msg_count = osMessageQueueGetCount(canRxBufferHandle);
     display_add_float_line("MsgQ", msg_count, 2);
-    display_add_float_line("Vbus", odrive_state.vbus_voltage, 3);
+    // display_add_float_line("Vbus", odrive_state.vbus_voltage, 3);
     display_add_float_line("Enc", odrive_get_axis0.encoder_pos_estimate, 4);
+    display_add_float_line("State", odrive_get_axis0.axis_current_state, 5);
     osSemaphoreRelease(displayBinarySemHandle);
     osDelay(1000);
   }
@@ -242,6 +250,7 @@ void canTaskStart(void *argument)
 void canSendTimerCallback(void *argument)
 {
   /* USER CODE BEGIN canSendTimerCallback */
+  odrive_can_write(AXIS_0, MSG_GET_ENCODER_ESTIMATES);
 
   /* USER CODE END canSendTimerCallback */
 }

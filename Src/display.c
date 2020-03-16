@@ -104,7 +104,7 @@ void display_init(void)
     osDelay(200);
 
     u8g2_ClearDisplay(&_u8g2);
-    u8g2_SetFont(&_u8g2, u8g2_font_pressstart2p_8r);
+    u8g2_SetFont(&_u8g2, u8g2_font_amstrad_cpc_extended_8r);
 }
 
 uint8_t display_add_float_line(char *prefix, float value, uint8_t line_number)
@@ -126,7 +126,7 @@ uint8_t display_add_float_line(char *prefix, float value, uint8_t line_number)
 
     u8g2_DrawStr(&_u8g2, 0, line_number * 8, prefix);
 
-    for (uint8_t i; i < DISPLAY_MAX_PREFIX_LENGTH - prefix_length; i++)
+    for (uint8_t i = 0; i < DISPLAY_MAX_PREFIX_LENGTH - prefix_length; i++)
     {
         u8g2_DrawStr(&_u8g2, (prefix_length * 8 + i + 1), line_number * 8, " ");
     }

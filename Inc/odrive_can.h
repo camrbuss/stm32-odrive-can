@@ -29,6 +29,22 @@ typedef enum
 
 typedef enum
 {
+    AXIS_STATE_UNDEFINED = 0,                  //<! will fall through to idle
+    AXIS_STATE_IDLE = 1,                       //<! disable PWM and do nothing
+    AXIS_STATE_STARTUP_SEQUENCE = 2,           //<! the actual sequence is defined by the config.startup_... flags
+    AXIS_STATE_FULL_CALIBRATION_SEQUENCE = 3,  //<! run all calibration procedures, then idle
+    AXIS_STATE_MOTOR_CALIBRATION = 4,          //<! run motor calibration
+    AXIS_STATE_SENSORLESS_CONTROL = 5,         //<! run sensorless control
+    AXIS_STATE_ENCODER_INDEX_SEARCH = 6,       //<! run encoder index search
+    AXIS_STATE_ENCODER_OFFSET_CALIBRATION = 7, //<! run encoder offset calibration
+    AXIS_STATE_CLOSED_LOOP_CONTROL = 8,        //<! run closed loop control
+    AXIS_STATE_LOCKIN_SPIN = 9,                //<! run lockin spin
+    AXIS_STATE_ENCODER_DIR_FIND = 10,
+    AXIS_STATE_HOMING = 11, //<! run axis homing function
+} State_t;
+
+typedef enum
+{
     MSG_CO_NMT_CTRL = 0x000, // CANOpen NMT Message REC
     MSG_ODRIVE_HEARTBEAT,
     MSG_ODRIVE_ESTOP,
@@ -73,7 +89,7 @@ typedef union {
 typedef struct
 {
     uint32_t axis_error;
-    uint32_t current_state;
+    uint32_t axis_current_state;
     uint32_t motor_error;
     uint32_t encoder_error;
     uint32_t sensorless_error;
@@ -116,7 +132,6 @@ OdriveAxisGetState_t odrive_get_axis0;
 OdriveAxisSetState_t odrive_set_axis1;
 OdriveAxisGetState_t odrive_get_axis1;
 
-
 // struct Config_t
 // {
 //     ControlMode_t control_mode = CTRL_MODE_POSITION_CONTROL; //see: ControlMode_t
@@ -125,7 +140,7 @@ OdriveAxisGetState_t odrive_get_axis1;
 
 uint8_t odrive_can_init(Axis_t axis);
 uint8_t odrive_handle_msg(CanMessage_t *msg);
-uint8_t odrive_can_send(Axis_t axis, OdriveMsg_t msg);
+uint8_t odrive_can_write(Axis_t axis, OdriveMsg_t msg);
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
 
