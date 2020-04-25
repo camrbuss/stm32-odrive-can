@@ -25,7 +25,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN Includes */     
 #include "display.h"
 #include "odrive_can.h"
 /* USER CODE END Includes */
@@ -52,41 +52,49 @@
 /* Definitions for controlTask */
 osThreadId_t controlTaskHandle;
 const osThreadAttr_t controlTask_attributes = {
-    .name = "controlTask",
-    .priority = (osPriority_t)osPriorityNormal,
-    .stack_size = 128 * 4};
+  .name = "controlTask",
+  .priority = (osPriority_t) osPriorityAboveNormal,
+  .stack_size = 128 * 4
+};
 /* Definitions for displayTask */
 osThreadId_t displayTaskHandle;
 const osThreadAttr_t displayTask_attributes = {
-    .name = "displayTask",
-    .priority = (osPriority_t)osPriorityLow,
-    .stack_size = 128 * 4};
+  .name = "displayTask",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 4
+};
 /* Definitions for canTask */
 osThreadId_t canTaskHandle;
 const osThreadAttr_t canTask_attributes = {
-    .name = "canTask",
-    .priority = (osPriority_t)osPriorityNormal,
-    .stack_size = 256 * 4};
+  .name = "canTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 256 * 4
+};
 /* Definitions for canCommandsQueue */
 osMessageQueueId_t canCommandsQueueHandle;
 const osMessageQueueAttr_t canCommandsQueue_attributes = {
-    .name = "canCommandsQueue"};
+  .name = "canCommandsQueue"
+};
 /* Definitions for canRxBuffer */
 osMessageQueueId_t canRxBufferHandle;
 const osMessageQueueAttr_t canRxBuffer_attributes = {
-    .name = "canRxBuffer"};
+  .name = "canRxBuffer"
+};
 /* Definitions for canSendTimer */
 osTimerId_t canSendTimerHandle;
 const osTimerAttr_t canSendTimer_attributes = {
-    .name = "canSendTimer"};
+  .name = "canSendTimer"
+};
 /* Definitions for canInterruptBinarySem */
 osSemaphoreId_t canInterruptBinarySemHandle;
 const osSemaphoreAttr_t canInterruptBinarySem_attributes = {
-    .name = "canInterruptBinarySem"};
+  .name = "canInterruptBinarySem"
+};
 /* Definitions for displayBinarySem */
 osSemaphoreId_t displayBinarySemHandle;
 const osSemaphoreAttr_t displayBinarySem_attributes = {
-    .name = "displayBinarySem"};
+  .name = "displayBinarySem"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -105,8 +113,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   * @param  None
   * @retval None
   */
-void MX_FREERTOS_Init(void)
-{
+void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -139,10 +146,10 @@ void MX_FREERTOS_Init(void)
 
   /* Create the queue(s) */
   /* creation of canCommandsQueue */
-  canCommandsQueueHandle = osMessageQueueNew(8, sizeof(uint16_t), &canCommandsQueue_attributes);
+  canCommandsQueueHandle = osMessageQueueNew (8, sizeof(uint16_t), &canCommandsQueue_attributes);
 
   /* creation of canRxBuffer */
-  canRxBufferHandle = osMessageQueueNew(8, sizeof(CanMessage_t), &canRxBuffer_attributes);
+  canRxBufferHandle = osMessageQueueNew (8, sizeof(CanMessage_t), &canRxBuffer_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -161,6 +168,7 @@ void MX_FREERTOS_Init(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
+
 }
 
 /* USER CODE BEGIN Header_controlTaskStart */
